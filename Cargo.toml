@@ -1,0 +1,3 @@
+[workspace]
+resolver = "3"
+members = ["source/vout","source/vout-service", "source/migration"]

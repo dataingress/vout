@@ -1,0 +1,39 @@
+use crate::{config, outputln};
+use clap::Parser;
+
+mod stage1;
+mod stage2;
+
+use stage1::stage1;
+
+#[derive(clap::Parser)]
+struct Arguments {
+    #[clap(short = 'c', long = "config", value_parser)]
+    config: Option<String>,
+}
+
+struct ParsedArguments {
+    config: Option<String>,
+}
+
+fn arguments_parser() -> ParsedArguments {
+    let args = Arguments::parse();
+
+    ParsedArguments {
+        config: args.config,
+    }
+}
+
+pub async fn run() -> anyhow::Result<()> {
+    outputln!("starting",
+        version: env!("CARGO_PKG_VERSION")
+    );
+
+    let arguments = arguments_parser();
+
+    config::load(arguments.config)?;
+
+    stage1().await?;
+
+    Ok(())
+}
