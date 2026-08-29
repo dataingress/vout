@@ -1,3 +1,8 @@
 [workspace]
 resolver = "3"
-members = ["source/vout", "source/vout-cli", "source/migration"]
+members = [
+    "source/vout",
+    "source/vout-cli",
+    "source/migration",
+    "dev/clear-keyring",
+]
