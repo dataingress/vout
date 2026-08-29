@@ -39,7 +39,31 @@ pub async fn run() -> anyhow::Result<()> {
 
     stage1().await?;
     stage2().await?;
-    server::start().await?;
+    tokio::select! {
+        result = server::start() => result?,
+        _ = shutdown_signal() => {
+            crate::coverage::flush();
+        }
+    }
 
     Ok(())
+}
+
+async fn shutdown_signal() {
+    #[cfg(unix)]
+    {
+        let mut terminate =
+            tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+                .expect("failed to install SIGTERM handler");
+
+        tokio::select! {
+            _ = tokio::signal::ctrl_c() => {}
+            _ = terminate.recv() => {}
+        }
+    }
+
+    #[cfg(not(unix))]
+    {
+        let _ = tokio::signal::ctrl_c().await;
+    }
 }

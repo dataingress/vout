@@ -9,6 +9,8 @@ pub struct Root {
     pub server: Server,
     #[serde(default = "default_db_dsn")]
     pub db_dsn: String,
+    #[serde(default = "default_amz_error_on_unsupported")]
+    pub amz_error_on_unsupported: bool,
 }
 
 #[derive(Deserialize, Clone)]
@@ -33,6 +35,8 @@ pub struct Server {
     pub concurrent: u32,
     #[serde(default = "default_timeout")]
     pub timeout: tokio::time::Duration,
+    #[serde(default = "default_max_body_bytes")]
+    pub max_body_bytes: u64,
 }
 
 impl Default for Server {
@@ -42,6 +46,7 @@ impl Default for Server {
             tls: None,
             concurrent: default_concurrent(),
             timeout: default_timeout(),
+            max_body_bytes: default_max_body_bytes(),
         }
     }
 }

@@ -22,7 +22,7 @@ pub async fn stage1() -> anyhow::Result<()> {
         let result = account::create_account(Some(account::CreateAccountParam {
             access_key: user.access_key.to_owned(),
             secret_key: user.secret_key.to_owned(),
-            lifetime: user.lifetime.map(|v| tokio::time::Duration::from_mins(v)),
+            lifetime: user.lifetime.map(tokio::time::Duration::from_mins),
         }))
         .await;
 
@@ -51,7 +51,7 @@ pub async fn stage1() -> anyhow::Result<()> {
         } else {
             let result = result?;
 
-            outputln!("first user created", access_key: result.access_key, secret_key: result.secret_key);
+            outputln!("first user created", access_key: result.access_key);
         }
     }
 

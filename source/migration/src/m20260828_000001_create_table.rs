@@ -1,7 +1,10 @@
 use sea_orm::{EntityTrait, Schema};
 use sea_orm_migration::prelude::*;
 
-use crate::models::{tb_account, tb_audit, tb_setting};
+use crate::models::{
+    tb_account, tb_audit, tb_param, tb_param_label, tb_param_tag, tb_param_version, tb_setting,
+    tb_tag,
+};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -12,11 +15,21 @@ impl MigrationTrait for Migration {
         create_entity(manager, tb_setting::Entity).await?;
         create_entity(manager, tb_account::Entity).await?;
         create_entity(manager, tb_audit::Entity).await?;
+        create_entity(manager, tb_param::Entity).await?;
+        create_entity(manager, tb_param_version::Entity).await?;
+        create_entity(manager, tb_param_label::Entity).await?;
+        create_entity(manager, tb_tag::Entity).await?;
+        create_entity(manager, tb_param_tag::Entity).await?;
 
         Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        drop_entity(manager, tb_param_tag::Entity).await?;
+        drop_entity(manager, tb_tag::Entity).await?;
+        drop_entity(manager, tb_param_label::Entity).await?;
+        drop_entity(manager, tb_param_version::Entity).await?;
+        drop_entity(manager, tb_param::Entity).await?;
         drop_entity(manager, tb_audit::Entity).await?;
         drop_entity(manager, tb_account::Entity).await?;
         drop_entity(manager, tb_setting::Entity).await?;

@@ -1,16 +1,19 @@
 use std::ops::Add;
 use std::sync::Arc;
 
+use http_body_util::Full;
+use hyper::body::Bytes;
 use hyper::service::service_fn;
 use hyper::{Request, server::conn::http1};
 use hyper_util::rt::TokioIo;
-use tokio::sync::RwLock;
+use tokio::sync::{RwLock, Semaphore};
 use uuid::Uuid;
 
 use crate::crypto::tls;
 use crate::server::res::{GwPassed, GwResponseInner};
 use crate::{config, errorln, outputln};
 
+pub mod amz;
 pub mod err;
 pub mod res;
 pub mod service;
@@ -26,6 +29,37 @@ impl std::fmt::Debug for AmznTargetFriendly {
             Some(value) => write!(f, "{}", value),
             None => write!(f, "N/A"),
         }
+    }
+}
+
+async fn dispatch_amz_handler<'a>(
+    target: &str,
+    req: Request<hyper::body::Incoming>,
+) -> anyhow::Result<GwPassed<'a>> {
+    let max_body_bytes = config::get().server.max_body_bytes;
+    let (parts, body) = req.into_parts();
+    let body = match amz::collect_limited_body(body, max_body_bytes).await {
+        Ok(body) => body,
+        Err(err) => return Ok(err),
+    };
+    let req = Request::from_parts(parts, Full::<Bytes>::new(body.clone()));
+
+    if let Some(err) = amz::authenticate(&req, &body).await? {
+        return Ok(err);
+    }
+
+    match target {
+        amz::AMZ_SSM_DELETE_PARAMETER => amz::delete_parameter(req).await,
+        amz::AMZ_SSM_DELETE_PARAMETERS => amz::delete_parameters(req).await,
+        amz::AMZ_SSM_DESCRIBE_PARAMETERS => amz::describe_parameters(req).await,
+        amz::AMZ_SSM_GET_PARAMETER => amz::get_parameter(req).await,
+        amz::AMZ_SSM_GET_PARAMETER_HISTORY => amz::get_parameter_history(req).await,
+        amz::AMZ_SSM_GET_PARAMETERS => amz::get_parameters(req).await,
+        amz::AMZ_SSM_GET_PARAMETERS_BY_PATH => amz::get_parameters_by_path(req).await,
+        amz::AMZ_SSM_LABEL_PARAMETER_VERSION => amz::label_parameter_version(req).await,
+        amz::AMZ_SSM_PUT_PARAMETER => amz::put_parameter(req).await,
+        amz::AMZ_SSM_UNLABEL_PARAMETER_VERSION => amz::unlabel_parameter_version(req).await,
+        _ => Ok(err::builder::unknown_route()),
     }
 }
 
@@ -45,6 +79,7 @@ async fn dispatch_handler<'a>(
     let result = match (target.as_deref(), path.as_str(), &method) {
         (None, "/health", &hyper::Method::GET) => service::health::handler().await,
         (None, "/ready", &hyper::Method::GET) => service::ready::handler().await,
+        (Some(target), "/", &hyper::Method::POST) => dispatch_amz_handler(target, req).await,
         _ => Ok(err::builder::unknown_route()),
     };
 
@@ -60,7 +95,15 @@ async fn gateway(
     let path = req.uri().path().to_owned();
     let method = req.method().clone();
     let request_id = Uuid::new_v4();
-    let (result, elapsed, amzn_target) = dispatch_handler(req).await;
+    let (result, elapsed, amzn_target) =
+        match tokio::time::timeout(config::get().server.timeout, dispatch_handler(req)).await {
+            Ok(result) => result,
+            Err(_) => (
+                Ok(err::builder::internal_service_error()),
+                0,
+                AmznTargetFriendly(None),
+            ),
+        };
 
     match result {
         Ok(v) => {
@@ -127,17 +170,23 @@ pub async fn start() -> anyhow::Result<()> {
     }
 
     let listener = tokio::net::TcpListener::bind(listen_address).await?;
+    let semaphore = Arc::new(Semaphore::new(server_config.concurrent as usize));
 
     loop {
         let tls_acceptor = tls_acceptor.clone();
+        let semaphore = semaphore.clone();
         let (stream, addr) = listener.accept().await?;
+        let permit = semaphore.acquire_owned().await?;
 
         tokio::spawn(async move {
+            let _permit = permit;
+
             if let Some(tls_acceptor) = tls_acceptor.read().await.as_ref() {
                 let stream = match tls_acceptor.accept(stream).await {
                     Ok(stream) => stream,
                     Err(err) => {
-                        errorln!("error accepting TLS connection", error: err);
+                        errorln!("error accepting TLS connection", error: err.to_string());
+
                         return;
                     }
                 };
@@ -148,7 +197,7 @@ pub async fn start() -> anyhow::Result<()> {
                     .serve_connection(io, service_fn(|req| gateway(addr.to_string(), req)))
                     .await
                 {
-                    errorln!("error serving connection", error: err);
+                    errorln!("error serving connection", error: err.to_string());
                 }
             } else {
                 let io = TokioIo::new(stream);
@@ -157,7 +206,7 @@ pub async fn start() -> anyhow::Result<()> {
                     .serve_connection(io, service_fn(|req| gateway(addr.to_string(), req)))
                     .await
                 {
-                    errorln!("error serving connection", error: err);
+                    errorln!("error serving connection", error: err.to_string());
                 }
             }
         });

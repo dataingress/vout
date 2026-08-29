@@ -36,7 +36,7 @@ impl<'a> GwPassed<'a> {
             GwPassed::Failure(msg) => build_http_response(
                 status,
                 request_id,
-                ErrorResponse::new(msg.0, msg.1)?.to_string(),
+                ErrorResponse::render(msg.0, msg.1)?.to_string(),
             ),
         }
     }
@@ -44,7 +44,7 @@ impl<'a> GwPassed<'a> {
 
 pub type GwResponse<'a> = anyhow::Result<GwPassed<'a>>;
 
-fn build_http_response<'a>(
+fn build_http_response(
     status: StatusCode,
     request_id: Uuid,
     body: String,

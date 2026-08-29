@@ -22,6 +22,7 @@ keyring = { version = "3.6.3", features = [
 migration = { path = "../migration" }
 rand = "0.8.8"
 rand_chacha = "0.3.1"
+regex = "1.12.2"
 rustls = { version = "0.23.43", features = ["aws_lc_rs", "ring"] }
 sea-orm = { version = "2.0.2", features = [
     "runtime-tokio-rustls",
@@ -38,3 +39,4 @@ uuid = { version = "1.26.0", features = ["v4"] }
 x25519-dalek = { version = "2.0.1", features = ["static_secrets"] }
 x509-parser = "0.18.1"
 zeroize = "1.8.2"
+macros = { path = "../macros" }

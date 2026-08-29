@@ -1,4 +1,7 @@
+use base64::Engine;
 use sea_orm::{ActiveValue::Set, EntityTrait};
+
+pub const ACCOUNT_SECRET_AAD_PREFIX: &str = "vout-account-secret";
 
 mod generator {
     use crate::crypto;
@@ -48,10 +51,16 @@ pub async fn create_account(
     };
 
     let conn = crate::db::open().await?;
+    let db_key = crate::app::settings::load_db_key_owned().await?;
+    let encrypted_secret_key = crate::crypto::param::encrypt_with_key(
+        &db_key,
+        secret_key.as_bytes(),
+        format!("{ACCOUNT_SECRET_AAD_PREFIX}\0{access_key}").as_bytes(),
+    )?;
 
     migration::models::tb_account::Entity::insert(migration::models::tb_account::ActiveModel {
         access_key: Set(access_key.clone()),
-        secret_key: Set(secret_key.clone()),
+        secret_key: Set(base64::prelude::BASE64_STANDARD.encode(encrypted_secret_key)),
         created_at: Set(created_at),
         expires_at: Set(expires_at),
     })

@@ -61,6 +61,10 @@ pub async fn populate() -> anyhow::Result<()> {
 }
 
 async fn load_db_key() -> anyhow::Result<&'static [u8; 32]> {
+    Ok(Box::leak(Box::new(load_db_key_owned().await?)))
+}
+
+pub async fn load_db_key_owned() -> anyhow::Result<[u8; 32]> {
     outputln!("loading database key");
 
     let conn = db::open().await?;
@@ -71,7 +75,7 @@ async fn load_db_key() -> anyhow::Result<&'static [u8; 32]> {
     {
         let key = crypto::dbkey::load(&setting.value)?;
 
-        Ok(Box::leak(Box::new(key)))
+        Ok(key)
     } else {
         anyhow::bail!("database key not found");
     }

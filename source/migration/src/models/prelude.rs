@@ -2,4 +2,9 @@
 
 pub use super::tb_account::Entity as TbAccount;
 pub use super::tb_audit::Entity as TbAudit;
+pub use super::tb_param::Entity as TbParam;
+pub use super::tb_param_label::Entity as TbParamLabel;
+pub use super::tb_param_tag::Entity as TbParamTag;
+pub use super::tb_param_version::Entity as TbParamVersion;
 pub use super::tb_setting::Entity as TbSetting;
+pub use super::tb_tag::Entity as TbTag;

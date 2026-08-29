@@ -9,7 +9,20 @@ macro_rules! raw_message_print {
     };
     ($identifier:expr, $message:expr, $($arg:ident : $value:expr),*) => {
         let now = chrono::Utc::now().to_rfc3339();
-        let keys = vec![ $(format!("{}={:?}", stringify!($arg), $value)),* ];
+        let keys = vec![ $({
+            let key = stringify!($arg);
+            let key_lc = key.to_ascii_lowercase();
+
+            if key_lc.contains("secret")
+                || key_lc.contains("password")
+                || key_lc.contains("token")
+                || key_lc.contains("authorization")
+            {
+                format!("{key}=<redacted>")
+            } else {
+                format!("{}={:?}", key, $value)
+            }
+        }),* ];
 
         println!("{now}:{} :: {}; {}", $identifier, $message, keys.join(", "));
     };

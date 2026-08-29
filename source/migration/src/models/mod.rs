@@ -3,4 +3,9 @@
 pub mod prelude;
 pub mod tb_account;
 pub mod tb_audit;
+pub mod tb_param;
+pub mod tb_param_label;
+pub mod tb_param_tag;
+pub mod tb_param_version;
 pub mod tb_setting;
+pub mod tb_tag;

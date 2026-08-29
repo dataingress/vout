@@ -19,9 +19,9 @@ const HKDF_INFO: &[u8] = b"vout-wrap-aes-key";
 fn base64_fixed_decode<const LEN: usize>(value: &str) -> anyhow::Result<[u8; LEN]> {
     let result = base64::prelude::BASE64_STANDARD.decode(value)?;
 
-    Ok(result
+    result
         .try_into()
-        .map_err(|_| anyhow::anyhow!("invalid length"))?)
+        .map_err(|_| anyhow::anyhow!("invalid length"))
 }
 
 /// creates a AES256 key, 32 bytes
@@ -100,7 +100,7 @@ fn decrypt_key(blob: &[u8], recipient_private: &StaticSecret) -> anyhow::Result<
         .decrypt(&nonce, cipher_text)
         .map_err(|e| anyhow::anyhow!("aead decrypt: {e}"))?;
 
-    pt.try_into().map_err(|_| anyhow::anyhow!("invalid length"))
+    Ok(pt)
 }
 
 pub fn create() -> anyhow::Result<String> {
@@ -112,7 +112,7 @@ pub fn create() -> anyhow::Result<String> {
         Err(e) => anyhow::bail!(e),
     };
 
-    let mut private_key_b64 = base64::prelude::BASE64_STANDARD.encode(&private_key.as_bytes());
+    let mut private_key_b64 = base64::prelude::BASE64_STANDARD.encode(private_key.as_bytes());
     let mut key = create_key();
     let encrypted_key = encrypt_key(&key, &public_key)?;
 
@@ -145,7 +145,7 @@ pub fn load(encrypted_key: &str) -> anyhow::Result<[u8; AES256_KEY_SIZE]> {
     private_key.zeroize();
     public_key.zeroize();
 
-    Ok(decrypted_key
+    decrypted_key
         .try_into()
-        .map_err(|_| anyhow::anyhow!("invalid length"))?)
+        .map_err(|_| anyhow::anyhow!("invalid length"))
 }

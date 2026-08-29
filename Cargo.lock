@@ -2172,6 +2172,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "macros"
+version = "0.1.0"
+dependencies = [
+ "convert_case",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
 name = "matchers"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4066,9 +4076,11 @@ dependencies = [
  "hyper",
  "hyper-util",
  "keyring",
+ "macros",
  "migration",
  "rand 0.8.8",
  "rand_chacha",
+ "regex",
  "rustls",
  "sea-orm",
  "serde",
@@ -4081,10 +4093,6 @@ dependencies = [
  "x509-parser",
  "zeroize",
 ]
-
-[[package]]
-name = "vout-service"
-version = "0.1.0"
 
 [[package]]
 name = "want"

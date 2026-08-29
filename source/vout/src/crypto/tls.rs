@@ -34,7 +34,7 @@ pub struct TlsServerCerts {
 
 pub enum BuidlTlsServerResult {
     Expired,
-    Data(TlsServerCerts),
+    Data(Box<TlsServerCerts>),
 }
 
 pub async fn build_tls_server() -> anyhow::Result<BuidlTlsServerResult> {
@@ -64,10 +64,10 @@ pub async fn build_tls_server() -> anyhow::Result<BuidlTlsServerResult> {
         .with_no_client_auth()
         .with_single_cert(vec![cert_pem], key_pem)?;
 
-    Ok(BuidlTlsServerResult::Data(TlsServerCerts {
+    Ok(BuidlTlsServerResult::Data(Box::new(TlsServerCerts {
         not_after: expiration,
         config: server_config,
-    }))
+    })))
 }
 
 pub async fn renew_spin() -> TlsServerCerts {
@@ -84,8 +84,8 @@ pub async fn renew_spin() -> TlsServerCerts {
                     config: tls_server_certs.config,
                 };
             }
-            Err(e) => {
-                outputln!("TLS certificate renewer failed, retry in 10 seconds", error: e);
+            Err(err) => {
+                outputln!("TLS certificate renewer failed, retry in 10 seconds", error: err.to_string());
             }
         }
 
