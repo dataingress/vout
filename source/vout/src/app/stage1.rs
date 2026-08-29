@@ -51,7 +51,10 @@ pub async fn stage1() -> anyhow::Result<()> {
         } else {
             let result = result?;
 
-            outputln!("first user created", access_key: result.access_key);
+            outputln!(format!(
+                "first user created; access_key={}; secret_key={}",
+                result.access_key, result.secret_key
+            ));
         }
     }
 

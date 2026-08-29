@@ -1,4 +1,4 @@
-use crate::{config, outputln, server};
+use crate::{config, crypto, outputln, server};
 use clap::Parser;
 
 mod stage1;
@@ -14,10 +14,14 @@ use stage2::stage2;
 struct Arguments {
     #[clap(short = 'c', long = "config", value_parser)]
     config: Option<String>,
+
+    #[clap(long = "clear-keyring")]
+    clear_keyring: bool,
 }
 
 struct ParsedArguments {
     config: Option<String>,
+    clear_keyring: bool,
 }
 
 fn arguments_parser() -> ParsedArguments {
@@ -25,15 +29,26 @@ fn arguments_parser() -> ParsedArguments {
 
     ParsedArguments {
         config: args.config,
+        clear_keyring: args.clear_keyring,
     }
 }
 
 pub async fn run() -> anyhow::Result<()> {
+    let arguments = arguments_parser();
+
+    if arguments.clear_keyring {
+        if crypto::dbkey::clear_keyring_key()? {
+            outputln!("keyring entry deleted");
+        } else {
+            outputln!("keyring entry was already absent");
+        }
+
+        return Ok(());
+    }
+
     outputln!("starting",
         version: env!("CARGO_PKG_VERSION")
     );
-
-    let arguments = arguments_parser();
 
     config::load(arguments.config)?;
 

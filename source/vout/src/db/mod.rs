@@ -1,4 +1,7 @@
 use sea_orm::{Database, DatabaseConnection};
+use tokio::sync::OnceCell;
+
+static CONNECTION: OnceCell<DatabaseConnection> = OnceCell::const_new();
 
 pub mod erro;
 
@@ -19,7 +22,12 @@ pub mod migration {
 }
 
 pub async fn open() -> anyhow::Result<DatabaseConnection> {
-    let config = crate::config::get();
+    let connection = CONNECTION
+        .get_or_try_init(|| async {
+            let config = crate::config::get();
+            Ok::<DatabaseConnection, anyhow::Error>(Database::connect(&config.db_dsn).await?)
+        })
+        .await?;
 
-    Ok(Database::connect(&config.db_dsn).await?)
+    Ok(connection.clone())
 }

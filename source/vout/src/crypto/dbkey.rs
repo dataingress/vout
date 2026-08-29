@@ -149,3 +149,13 @@ pub fn load(encrypted_key: &str) -> anyhow::Result<[u8; AES256_KEY_SIZE]> {
         .try_into()
         .map_err(|_| anyhow::anyhow!("invalid length"))
 }
+
+pub fn clear_keyring_key() -> anyhow::Result<bool> {
+    let entry = keyring::Entry::new(KEYRING_SERVICE, KEYRING_USER)?;
+
+    match entry.delete_credential() {
+        Ok(()) => Ok(true),
+        Err(keyring::Error::NoEntry) => Ok(false),
+        Err(e) => anyhow::bail!(e),
+    }
+}

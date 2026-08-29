@@ -15,7 +15,7 @@ pub fn default_max_body_bytes() -> u64 {
 }
 
 pub fn default_db_dsn() -> String {
-    "sqlite://:memory:".to_string()
+    "sqlite::memory:".to_string()
 }
 
 pub fn default_amz_error_on_unsupported() -> bool {
