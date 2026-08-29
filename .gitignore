@@ -4,3 +4,6 @@ target/
 *.sqlite3
 *.sqlite
 config.yaml
+*.crt
+*.key
+*.pem

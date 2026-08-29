@@ -5,7 +5,8 @@ use crate::config::defaults::*;
 #[derive(Deserialize, Clone)]
 pub struct Root {
     pub first_user: Option<FirstUser>,
-    pub server: Option<Server>,
+    #[serde(default)]
+    pub server: Server,
     #[serde(default = "default_db_dsn")]
     pub db_dsn: String,
 }
@@ -32,4 +33,15 @@ pub struct Server {
     pub concurrent: u32,
     #[serde(default = "default_timeout")]
     pub timeout: tokio::time::Duration,
+}
+
+impl Default for Server {
+    fn default() -> Self {
+        Self {
+            listen_address: default_listen_address(),
+            tls: None,
+            concurrent: default_concurrent(),
+            timeout: default_timeout(),
+        }
+    }
 }

@@ -1,12 +1,13 @@
 use crate::{
     app::{account, settings},
-    config, db, outputln,
+    config, crypto, db, outputln,
 };
 use sea_orm::SqlErr;
 
 pub async fn stage1() -> anyhow::Result<()> {
     outputln!("starting", stage: 1);
 
+    crypto::init();
     db::migration::run().await?;
 
     if settings::db_key_exists().await? {

@@ -1,4 +1,4 @@
-use crate::{config, outputln};
+use crate::{config, outputln, server};
 use clap::Parser;
 
 mod stage1;
@@ -39,6 +39,7 @@ pub async fn run() -> anyhow::Result<()> {
 
     stage1().await?;
     stage2().await?;
+    server::start().await?;
 
     Ok(())
 }
