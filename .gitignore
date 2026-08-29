@@ -1,3 +1,6 @@
 target/
 .env
 !.dev.env
+*.sqlite3
+*.sqlite
+config.yaml

@@ -4,10 +4,21 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+aes-gcm = "0.10.3"
 anyhow = "1.0.104"
+base64 = "0.22.1"
+chacha20poly1305 = "0.11.0"
 chrono = "0.4.45"
 clap = { version = "4.6.6", features = ["derive"] }
 config = "0.15.25"
+hkdf = "0.12.4"
+keyring = { version = "3.6.3", features = [
+    "crypto-rust",
+    "linux-native-sync-persistent",
+] }
+migration = { path = "../migration" }
+rand = "0.8.8"
+rand_chacha = "0.3.1"
 sea-orm = { version = "2.0.2", features = [
     "runtime-tokio-rustls",
     "sqlx-mysql",
@@ -15,5 +26,8 @@ sea-orm = { version = "2.0.2", features = [
     "sqlx-sqlite",
 ] }
 serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.145"
+sha2 = "0.10.9"
 tokio = { version = "1.53.1", features = ["full"] }
-migration = { path = "../migration" }
+x25519-dalek = { version = "2.0.1", features = ["static_secrets"] }
+zeroize = "1.8.2"

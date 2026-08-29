@@ -4,7 +4,11 @@ use clap::Parser;
 mod stage1;
 mod stage2;
 
+pub mod account;
+pub mod settings;
+
 use stage1::stage1;
+use stage2::stage2;
 
 #[derive(clap::Parser)]
 struct Arguments {
@@ -34,6 +38,7 @@ pub async fn run() -> anyhow::Result<()> {
     config::load(arguments.config)?;
 
     stage1().await?;
+    stage2().await?;
 
     Ok(())
 }
